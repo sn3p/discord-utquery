@@ -1,4 +1,5 @@
 import discord from 'discord.js';
+import dgram from 'dgram';
 import logger from 'winston';
 
 class Bot {
@@ -6,10 +7,11 @@ class Bot {
     this.token = options.token;
     this.prefix = options.prefix;
     this.discord = new discord.Client();
+    this.socket = dgram.createSocket('udp4');
   }
 
   connect() {
-    logger.info('Connecting to Discord');
+    logger.info('Connecting to Discord ...');
     this.discord.login(this.token);
     this.attachListeners();
   }
@@ -19,7 +21,6 @@ class Bot {
       logger.info('Connected to Discord');
     });
 
-    // TODO: this doesn't trigger when a message is edited
     this.discord.on('message', this.parseMessage.bind(this));
 
     this.discord.on('error', error => {
@@ -28,6 +29,16 @@ class Bot {
 
     this.discord.on('warn', warning => {
       logger.warn('Received warn event from Discord', warning);
+    });
+
+    this.socket.on('message', this.onSocketMessage.bind(this));
+
+    this.socket.on('error', function (error) {
+      console.log('client error: \n' + error.stack);
+    });
+
+    this.socket.on('close', function () {
+      console.log('closed.');
     });
   }
 
@@ -54,18 +65,52 @@ class Bot {
    */
   command(command, args, message) {
     switch (command) {
-      case 'stats': {
-        this.stats(args, message);
+      case 'q':
+      case 'query': {
+        this.q(args, message);
         break;
       }
     }
   }
 
   /**
-   * Stats command
+   * Query command
    */
-  stats(args, message) {
-    message.channel.sendMessage('test');
+  q(args, message) {
+    // Validate host
+    if (args.lengt < 1 || args[0].length < 4) {
+      return;
+    }
+
+    let [host, port] = args[0].split(':');
+    port = port || 7777;
+
+    // Should find a different way...
+    this.message = message;
+
+    // https://wiki.beyondunreal.com/Legacy:UT_Server_Query
+    const command = '\\status\\';
+    // const command = '\\basic\\\\info\\\\rules\\\\players\\';
+    // const command = '\\players\\';
+    // const command = '\\gamestatus\\';
+    // const command = Buffer.from('\\basic\\');
+
+    this.socket.send(command, port, host, error => {
+    // this.socket.send(command, 0, command.lenght, port, host, error => {
+      // if (error) {
+      //   logger.error(error);
+      //   return;
+      // }
+
+      // this.socket.close();
+      logger.info('UDP message sent to ' + host + ':' + port);
+    });
+  }
+
+  onSocketMessage(message, remote) {
+    // logger.info(message);
+    console.log(message);
+    this.message.channel.sendMessage('```' + message + '```');
   }
 }
 

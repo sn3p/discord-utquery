@@ -1,7 +1,7 @@
 {
-  "name": "discord-reporter",
+  "name": "discord-utquery",
   "version": "1.0.0",
-  "description": "UT99 Reporter Bot for Discord.",
+  "description": "UT99 Query Bot for Discord.",
   "main": "dist/index.js",
   "scripts": {
     "start": "node dist/index.js",

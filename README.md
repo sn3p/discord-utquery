@@ -1,6 +1,6 @@
-# discord-reporter
+# discord-utquery
 
-UT99 Reporter Bot for [Discord](https://discordapp.com).
+UT99 Query Bot for [Discord](https://discordapp.com).
 This is very WIP and far from finished, so use at your own risk.
 
 ## Installation
